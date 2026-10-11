@@ -1,0 +1,80 @@
+x-app: &app
+  build: .
+  restart: unless-stopped
+  environment: &app-environment
+    APP_NAME: go-api
+    MONGO_URI: mongodb://mongo:27017
+    MONGO_DATABASE: go_api
+    MONGO_POSTS_COLLECTION: posts
+    POSTGRES_DSN: host=postgres user=postgres password=postgres dbname=go_api port=5432 sslmode=disable
+    RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672/
+  depends_on:
+    mongo:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+
+services:
+  http:
+    <<: *app
+    command: ["/main"]
+    environment:
+      <<: *app-environment
+      PORT: 8080
+    ports:
+      - "8080:8080"
+
+  listener:
+    <<: *app
+    command: ["/listener"]
+
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: go_api
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d go_api"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  mongo-data:
+  postgres-data:
+  rabbitmq-data:

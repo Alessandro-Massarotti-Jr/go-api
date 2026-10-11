@@ -2,6 +2,7 @@
 from golang:1.26.4
 WORKDIR /build
 COPY ./ ./
+ENV CGO_ENABLED=0
 RUN go mod download
 RUN go build -o main cmd/http/main.go
 RUN go build -o listener cmd/listener/main.go
