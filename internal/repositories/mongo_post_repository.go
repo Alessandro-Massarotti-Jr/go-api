@@ -25,7 +25,7 @@ type postCursor struct {
 }
 
 type MongoPostRepository struct {
-	collection *mongo.Collection
+	postCollection *mongo.Collection
 }
 
 var _ PostRepository = (*MongoPostRepository)(nil)
@@ -59,11 +59,11 @@ func newMongoPostRepository() (*MongoPostRepository, error) {
 		})
 	}
 
-	collection := db.Collection(databases.CollectionInput{Name: "posts"})
+	postCollection := db.Collection(databases.CollectionInput{Name: "posts"})
 
 	ctx, cancel := context.WithTimeout(context.Background(), createIndexesTimeout)
 	defer cancel()
-	if _, err := collection.Indexes().CreateMany(ctx, schemas.PostIndexes); err != nil {
+	if _, err := postCollection.Indexes().CreateMany(ctx, schemas.PostIndexes); err != nil {
 		return nil, appErrors.CreatePostRepositoryError(appErrors.CreatePostRepositoryErrorInput{
 			Location:    location,
 			Message:     "Failed to create posts indexes",
@@ -71,10 +71,10 @@ func newMongoPostRepository() (*MongoPostRepository, error) {
 		})
 	}
 
-	return &MongoPostRepository{collection: collection}, nil
+	return &MongoPostRepository{postCollection: postCollection}, nil
 }
 
-func (repository *MongoPostRepository) FindAll(ctx context.Context, input FindPostsInput) (*PaginatedPosts, error) {
+func (mongoPostRepository *MongoPostRepository) FindAll(ctx context.Context, input FindPostsInput) (*PaginatedPosts, error) {
 	const location = "MongoPostRepository.FindAll"
 
 	limit := input.Limit
@@ -105,7 +105,7 @@ func (repository *MongoPostRepository) FindAll(ctx context.Context, input FindPo
 		SetSort(bson.D{{Key: "createdAt", Value: -1}, {Key: "id", Value: -1}}).
 		SetLimit(int64(limit + 1))
 
-	result, err := repository.collection.Find(ctx, filter, findOptions)
+	result, err := mongoPostRepository.postCollection.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, appErrors.CreatePostRepositoryError(appErrors.CreatePostRepositoryErrorInput{
 			Location:    location,
@@ -146,11 +146,11 @@ func (repository *MongoPostRepository) FindAll(ctx context.Context, input FindPo
 	return &PaginatedPosts{Items: posts, NextCursor: nextCursor}, nil
 }
 
-func (repository *MongoPostRepository) FindById(ctx context.Context, input FindPostByIdInput) (*entities.Post, error) {
+func (mongoPostRepository *MongoPostRepository) FindById(ctx context.Context, input FindPostByIdInput) (*entities.Post, error) {
 	const location = "MongoPostRepository.FindById"
 
 	var document schemas.PostSchema
-	err := repository.collection.FindOne(ctx, bson.M{"id": string(input.ID)}).Decode(&document)
+	err := mongoPostRepository.postCollection.FindOne(ctx, bson.M{"id": string(input.ID)}).Decode(&document)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return nil, appErrors.CreatePostNotFoundError(appErrors.CreatePostNotFoundErrorInput{
 			Location: location,
@@ -168,11 +168,11 @@ func (repository *MongoPostRepository) FindById(ctx context.Context, input FindP
 	return toEntity(document), nil
 }
 
-func (repository *MongoPostRepository) Create(ctx context.Context, post *entities.Post) (*entities.Post, error) {
+func (mongoPostRepository *MongoPostRepository) Create(ctx context.Context, post *entities.Post) (*entities.Post, error) {
 	const location = "MongoPostRepository.Create"
 
 	document := toSchema(post)
-	if _, err := repository.collection.InsertOne(ctx, document); err != nil {
+	if _, err := mongoPostRepository.postCollection.InsertOne(ctx, document); err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return nil, appErrors.CreatePostAlreadyExistsError(appErrors.CreatePostAlreadyExistsErrorInput{
 				Location:    location,
@@ -190,7 +190,7 @@ func (repository *MongoPostRepository) Create(ctx context.Context, post *entitie
 	return toEntity(document), nil
 }
 
-func (repository *MongoPostRepository) Update(ctx context.Context, input UpdatePostInput) (*entities.Post, error) {
+func (mongoPostRepository *MongoPostRepository) Update(ctx context.Context, input UpdatePostInput) (*entities.Post, error) {
 	const location = "MongoPostRepository.Update"
 
 	set := bson.M{"updatedAt": time.Now().UTC().Truncate(time.Millisecond)}
@@ -202,7 +202,7 @@ func (repository *MongoPostRepository) Update(ctx context.Context, input UpdateP
 	}
 
 	var document schemas.PostSchema
-	err := repository.collection.FindOneAndUpdate(
+	err := mongoPostRepository.postCollection.FindOneAndUpdate(
 		ctx,
 		bson.M{"id": string(input.ID)},
 		bson.M{"$set": set},
@@ -225,10 +225,10 @@ func (repository *MongoPostRepository) Update(ctx context.Context, input UpdateP
 	return toEntity(document), nil
 }
 
-func (repository *MongoPostRepository) Delete(ctx context.Context, input DeletePostInput) error {
+func (mongoPostRepository *MongoPostRepository) Delete(ctx context.Context, input DeletePostInput) error {
 	const location = "MongoPostRepository.Delete"
 
-	result, err := repository.collection.DeleteOne(ctx, bson.M{"id": string(input.ID)})
+	result, err := mongoPostRepository.postCollection.DeleteOne(ctx, bson.M{"id": string(input.ID)})
 	if err != nil {
 		return appErrors.CreatePostRepositoryError(appErrors.CreatePostRepositoryErrorInput{
 			Location:    location,

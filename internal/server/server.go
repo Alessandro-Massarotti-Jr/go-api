@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +28,7 @@ func Create() *Server {
 	}
 
 	engine := gin.New()
-	engine.Use(gin.Recovery())
+	engine.Use(gin.Recovery(), middlewares.ErrorHandler())
 	RegisterRoutes(engine)
 
 	return &Server{
