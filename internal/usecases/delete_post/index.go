@@ -3,13 +3,14 @@ package deletepost
 import (
 	"sync"
 
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/providers"
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/repositories"
 	"github.com/gin-gonic/gin"
 )
 
 // Controller is the delete post controller ready to be bound to a route.
 // Its dependencies are wired on the first request, so importing this package
-// (e.g. in tests) does not connect to the database.
+// (e.g. in tests) does not connect to the database nor to RabbitMQ.
 var Controller = &lazyDeletePostController{}
 
 type lazyDeletePostController struct {
@@ -30,14 +31,22 @@ func (lazyDeletePostController *lazyDeletePostController) Handle(context *gin.Co
 	lazyDeletePostController.deletePostController.Handle(context)
 }
 
-// compose wires the delete post dependencies: repository -> use case -> controller.
+// compose wires the delete post dependencies: repository + event provider -> use case -> controller.
 func compose() (*DeletePostController, error) {
 	postRepository, err := repositories.GetMongoPostRepositoryInstance()
 	if err != nil {
 		return nil, err
 	}
 
-	deletePostUseCase := NewDeletePostUseCase(NewDeletePostUseCaseInput{PostRepository: postRepository})
+	eventProvider, err := providers.GetRabbitMQEventProviderInstance()
+	if err != nil {
+		return nil, err
+	}
+
+	deletePostUseCase := NewDeletePostUseCase(NewDeletePostUseCaseInput{
+		PostRepository: postRepository,
+		EventProvider:  eventProvider,
+	})
 
 	return NewDeletePostController(NewDeletePostControllerInput{DeletePostUseCase: deletePostUseCase}), nil
 }

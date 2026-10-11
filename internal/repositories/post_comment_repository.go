@@ -14,6 +14,10 @@ type FindPostCommentsByPostIdInput struct {
 	Limit  int // default: DefaultPageLimit, capped at MaxPageLimit
 }
 
+type DeletePostCommentsByPostIdInput struct {
+	PostID entities.PostId
+}
+
 type PaginatedPostComments struct {
 	Items      []*entities.PostComment `json:"items"`
 	NextCursor *string                 `json:"nextCursor"`
@@ -22,4 +26,6 @@ type PaginatedPostComments struct {
 type PostCommentRepository interface {
 	FindAllByPostId(ctx context.Context, input FindPostCommentsByPostIdInput) (*PaginatedPostComments, error)
 	Create(ctx context.Context, postComment *entities.PostComment) (*entities.PostComment, error)
+	// DeleteAllByPostId removes every comment of the post. Deleting a post without comments is not an error.
+	DeleteAllByPostId(ctx context.Context, input DeletePostCommentsByPostIdInput) error
 }

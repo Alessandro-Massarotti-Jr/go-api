@@ -55,6 +55,10 @@ func (postCommentRepositoryMock *postCommentRepositoryMock) FindAllByPostId(ctx 
 	return postCommentRepositoryMock.FindAllByPostIdFunc(ctx, input)
 }
 
+func (postCommentRepositoryMock *postCommentRepositoryMock) DeleteAllByPostId(ctx context.Context, input repositories.DeletePostCommentsByPostIdInput) error {
+	panic("postCommentRepositoryMock.DeleteAllByPostId should not be called")
+}
+
 func (postCommentRepositoryMock *postCommentRepositoryMock) Create(ctx context.Context, postComment *entities.PostComment) (*entities.PostComment, error) {
 	panic("postCommentRepositoryMock.Create should not be called")
 }

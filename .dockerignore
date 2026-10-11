@@ -1,3 +1,7 @@
 .git
-.env
+.gitignore
+*.env
 docker-compose.yml
+Dockerfile
+Makefile
+README.md

@@ -140,6 +140,23 @@ func (gormPostCommentRepository *GormPostCommentRepository) Create(ctx context.C
 	return toPostCommentEntity(document), nil
 }
 
+func (gormPostCommentRepository *GormPostCommentRepository) DeleteAllByPostId(ctx context.Context, input DeletePostCommentsByPostIdInput) error {
+	const location = "GormPostCommentRepository.DeleteAllByPostId"
+
+	err := gormPostCommentRepository.postCommentTable().WithContext(ctx).
+		Where("post_id = ?", string(input.PostID)).
+		Delete(&schemas.PostCommentSchema{}).Error
+	if err != nil {
+		return appErrors.CreatePostCommentRepositoryError(appErrors.CreatePostCommentRepositoryErrorInput{
+			Location:    location,
+			Message:     "Failed to delete post comments",
+			OriginError: err,
+		})
+	}
+
+	return nil
+}
+
 // toPostCommentSchema truncates dates to microseconds, the precision Postgres stores,
 // so the entity built back from the schema matches what is persisted.
 func toPostCommentSchema(postComment *entities.PostComment) schemas.PostCommentSchema {

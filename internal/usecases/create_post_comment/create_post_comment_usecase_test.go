@@ -61,6 +61,10 @@ func (postCommentRepositoryMock *postCommentRepositoryMock) FindAllByPostId(ctx 
 	panic("postCommentRepositoryMock.FindAllByPostId should not be called")
 }
 
+func (postCommentRepositoryMock *postCommentRepositoryMock) DeleteAllByPostId(ctx context.Context, input repositories.DeletePostCommentsByPostIdInput) error {
+	panic("postCommentRepositoryMock.DeleteAllByPostId should not be called")
+}
+
 type eventProviderMock struct {
 	PublishEventFunc func(ctx context.Context, input providers.PublishEventInput) error
 	calls            int

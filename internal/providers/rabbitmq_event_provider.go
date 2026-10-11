@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,13 +16,16 @@ import (
 const (
 	// eventBusExchange is the topic exchange shared by every service.
 	// Routing keys follow services.<serviceName>.<topic>.
-	eventBusExchange      = "event-bus-services"
+	eventBusExchange = "event-bus-services"
+	// listenerQueueSuffix names the single durable queue of the service: <APP_NAME>-in.
+	// It gets one services.*.<topic> binding per registered listener topic.
+	listenerQueueSuffix   = "-in"
 	listenerPrefetchCount = 10
 )
 
 // RabbitMQEventProvider publishes to and consumes from the event-bus-services exchange.
 // Published events go out as services.<APP_NAME>.<topic>; listeners receive the topic
-// from any service (services.*.<topic>) through a durable queue named <APP_NAME>.<topic>.
+// from any service (services.*.<topic>) through a single durable queue named <APP_NAME>-in.
 type RabbitMQEventProvider struct {
 	connection     *amqp.Connection
 	publishChannel *amqp.Channel
@@ -170,20 +174,17 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) StartListening(ctx context.C
 		})
 	}
 
-	var consumers sync.WaitGroup
-	consumerTags := make([]string, 0, len(handlers))
-	for topic, topicHandlers := range handlers {
-		queueName := rabbitMQEventProvider.serviceName + "." + topic
-		bindingKey := "services.*." + topic
+	queueName := rabbitMQEventProvider.serviceName + listenerQueueSuffix
+	if _, err := consumeChannel.QueueDeclare(queueName, true, false, false, false, nil); err != nil {
+		return appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
+			Location:    location,
+			Message:     "Failed to declare queue",
+			OriginError: err,
+		})
+	}
 
-		if _, err := consumeChannel.QueueDeclare(queueName, true, false, false, false, nil); err != nil {
-			return appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
-				Location:    location,
-				Message:     "Failed to declare queue",
-				Topic:       topic,
-				OriginError: err,
-			})
-		}
+	for topic, topicHandlers := range handlers {
+		bindingKey := "services.*." + topic
 		if err := consumeChannel.QueueBind(queueName, bindingKey, eventBusExchange, false, nil); err != nil {
 			return appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
 				Location:    location,
@@ -193,46 +194,42 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) StartListening(ctx context.C
 			})
 		}
 
-		consumerTag := queueName
-		deliveries, err := consumeChannel.Consume(queueName, consumerTag, false, false, false, false, nil)
-		if err != nil {
-			return appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
-				Location:    location,
-				Message:     "Failed to consume queue",
-				Topic:       topic,
-				OriginError: err,
-			})
-		}
-		consumerTags = append(consumerTags, consumerTag)
-
 		rabbitMQEventProvider.logger.Info(logger.LogMessage{
 			Action:  "rabbitmq.listen",
 			Message: "Listening to topic",
 			Data:    map[string]any{"queue": queueName, "bindingKey": bindingKey, "handlers": len(topicHandlers)},
 		})
+	}
 
-		consumers.Go(func() {
-			// In-flight events finish even when ctx is cancelled during shutdown.
-			rabbitMQEventProvider.consume(context.WithoutCancel(ctx), consumeInput{
-				Topic:      topic,
-				Handlers:   topicHandlers,
-				Deliveries: deliveries,
-			})
+	consumerTag := queueName
+	deliveries, err := consumeChannel.Consume(queueName, consumerTag, false, false, false, false, nil)
+	if err != nil {
+		return appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
+			Location:    location,
+			Message:     "Failed to consume queue",
+			OriginError: err,
 		})
 	}
+
+	var consumer sync.WaitGroup
+	consumer.Go(func() {
+		// In-flight events finish even when ctx is cancelled during shutdown.
+		rabbitMQEventProvider.consume(context.WithoutCancel(ctx), consumeInput{
+			Handlers:   handlers,
+			Deliveries: deliveries,
+		})
+	})
 
 	connectionClosed := rabbitMQEventProvider.connection.NotifyClose(make(chan *amqp.Error, 1))
 
 	select {
 	case <-ctx.Done():
 		// Stop receiving new deliveries, then wait for the in-flight ones to be acked.
-		for _, consumerTag := range consumerTags {
-			_ = consumeChannel.Cancel(consumerTag, false)
-		}
-		consumers.Wait()
+		_ = consumeChannel.Cancel(consumerTag, false)
+		consumer.Wait()
 		return nil
 	case closeErr := <-connectionClosed:
-		consumers.Wait()
+		consumer.Wait()
 		return appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
 			Location:    location,
 			Message:     "RabbitMQ connection closed",
@@ -242,19 +239,31 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) StartListening(ctx context.C
 }
 
 type consumeInput struct {
-	Topic      string
-	Handlers   []EventHandler
+	Handlers   map[string][]EventHandler // by topic
 	Deliveries <-chan amqp.Delivery
 }
 
-// consume runs every handler of the topic for each delivery. A failed event is requeued once;
+// consume runs, for each delivery, every handler of the topic taken from its routing key. A failed event is requeued once;
 // if it fails again on redelivery it is discarded so a poison message does not loop forever.
 func (rabbitMQEventProvider *RabbitMQEventProvider) consume(ctx context.Context, input consumeInput) {
 	for delivery := range input.Deliveries {
-		event := Event{Topic: input.Topic, Payload: delivery.Body}
+		topic := topicFromRoutingKey(delivery.RoutingKey)
+		topicHandlers, ok := input.Handlers[topic]
+		if !ok {
+			// A binding left over from a listener that no longer exists; drop the event.
+			rabbitMQEventProvider.logger.Warn(logger.LogMessage{
+				Action:  "rabbitmq.consume",
+				Message: "No handler for topic, discarding event",
+				Data:    map[string]any{"topic": topic, "routingKey": delivery.RoutingKey},
+			})
+			_ = delivery.Ack(false)
+			continue
+		}
+
+		event := Event{Topic: topic, Payload: delivery.Body}
 
 		var handlerErr error
-		for _, handler := range input.Handlers {
+		for _, handler := range topicHandlers {
 			if handlerErr = handler(ctx, event); handlerErr != nil {
 				break
 			}
@@ -270,7 +279,7 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) consume(ctx context.Context,
 			Action:  "rabbitmq.consume",
 			Message: "Failed to handle event",
 			Data: map[string]any{
-				"topic":      input.Topic,
+				"topic":      topic,
 				"routingKey": delivery.RoutingKey,
 				"requeued":   requeue,
 				"error":      handlerErr.Error(),
@@ -278,4 +287,13 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) consume(ctx context.Context,
 		})
 		_ = delivery.Nack(false, requeue)
 	}
+}
+
+// topicFromRoutingKey extracts <topic> from services.<serviceName>.<topic>.
+func topicFromRoutingKey(routingKey string) string {
+	parts := strings.SplitN(routingKey, ".", 3)
+	if len(parts) < 3 {
+		return routingKey
+	}
+	return parts[2]
 }
