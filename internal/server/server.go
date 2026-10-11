@@ -10,34 +10,29 @@ import (
 	"time"
 
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
 	httpServer *http.Server
-	logger     *config.Logger
+	logger     *logger.Logger
 }
 
-// New builds the gin engine with every route registered.
-// The port is read from the PORT env var, falling back to 8080.
+// Create builds the gin engine with every route registered, listening on the configured PORT.
 func Create() *Server {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
 	engine := gin.New()
 	engine.Use(gin.Recovery(), middlewares.ErrorHandler())
 	RegisterRoutes(engine)
 
 	return &Server{
 		httpServer: &http.Server{
-			Addr:              ":" + port,
+			Addr:              ":" + config.GetConfig(config.Port),
 			Handler:           engine,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
-		logger: config.GetInstance(),
+		logger: logger.GetInstance(),
 	}
 }
 
@@ -45,7 +40,7 @@ func Create() *Server {
 func (server *Server) Start() error {
 	errChan := make(chan error, 1)
 	go func() {
-		server.logger.Info(config.LogMessage{
+		server.logger.Info(logger.LogMessage{
 			Action:  "server.start",
 			Message: "Server listening",
 			Data:    map[string]any{"addr": server.httpServer.Addr},
@@ -64,7 +59,7 @@ func (server *Server) Start() error {
 	case <-quit:
 	}
 
-	server.logger.Info(config.LogMessage{Action: "server.shutdown", Message: "Shutting down server"})
+	server.logger.Info(logger.LogMessage{Action: "server.shutdown", Message: "Shutting down server"})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

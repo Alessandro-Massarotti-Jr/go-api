@@ -2,16 +2,14 @@ package databases
 
 import (
 	"context"
-	"os"
 	"sync"
 
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
 )
-
-const defaultPostgresDSN = "host=localhost user=postgres password=postgres dbname=go_api port=5432 sslmode=disable"
 
 type Postgres struct {
 	client *gorm.DB
@@ -31,14 +29,9 @@ func GetPostgresInstance() (*Postgres, error) {
 }
 
 func connectPostgres() (*Postgres, error) {
-	logger := config.GetInstance()
+	appLogger := logger.GetInstance()
 
-	dsn := os.Getenv("POSTGRES_DSN")
-	if dsn == "" {
-		dsn = defaultPostgresDSN
-	}
-
-	client, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	client, err := gorm.Open(postgres.Open(config.GetConfig(config.PostgresDSN)), &gorm.Config{
 		Logger:         gormLogger.Default.LogMode(gormLogger.Silent),
 		TranslateError: true,
 	})
@@ -57,7 +50,7 @@ func connectPostgres() (*Postgres, error) {
 		return nil, err
 	}
 
-	logger.Info(config.LogMessage{
+	appLogger.Info(logger.LogMessage{
 		Action:  "postgres.connect",
 		Message: "Connected to Postgres",
 	})

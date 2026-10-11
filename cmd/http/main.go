@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/server"
 )
 
@@ -12,11 +13,20 @@ import (
 // @description	Estudo de estruturar um projeto com GoLang.
 // @BasePath		/
 func main() {
-	logger := config.GetInstance()
-	logger.SetLevel(config.LevelDebug)
+	appLogger := logger.GetInstance()
+	appLogger.SetLevel(logger.LevelDebug)
+
+	if _, err := config.GetInstance(); err != nil {
+		appLogger.Error(logger.LogMessage{
+			Action:  "main",
+			Message: "Invalid config",
+			Data:    map[string]any{"error": err.Error()},
+		})
+		os.Exit(1)
+	}
 
 	if err := server.Create().Start(); err != nil {
-		logger.Error(config.LogMessage{
+		appLogger.Error(logger.LogMessage{
 			Action:  "main",
 			Message: "Server stopped with error",
 			Data:    map[string]any{"error": err.Error()},

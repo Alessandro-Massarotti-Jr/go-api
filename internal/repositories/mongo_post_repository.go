@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/databases"
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/entities"
 	appErrors "github.com/Alessandro-Massarotti-Jr/go-api/internal/errors"
@@ -50,7 +51,7 @@ func newMongoPostRepository() (*MongoPostRepository, error) {
 		})
 	}
 
-	postCollection := db.Collection(databases.CollectionInput{Name: "posts"})
+	postCollection := db.Collection(databases.CollectionInput{Name: config.GetConfig(config.MongoPostsCollection)})
 
 	ctx, cancel := context.WithTimeout(context.Background(), createIndexesTimeout)
 	defer cancel()

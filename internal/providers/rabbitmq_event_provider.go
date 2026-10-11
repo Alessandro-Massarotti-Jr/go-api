@@ -3,18 +3,16 @@ package providers
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
 	appErrors "github.com/Alessandro-Massarotti-Jr/go-api/internal/errors"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 const (
-	defaultRabbitMQURI = "amqp://guest:guest@localhost:5672/"
-	defaultServiceName = "go-api"
 	// eventBusExchange is the topic exchange shared by every service.
 	// Routing keys follow services.<serviceName>.<topic>.
 	eventBusExchange      = "event-bus-services"
@@ -22,8 +20,8 @@ const (
 )
 
 // RabbitMQEventProvider publishes to and consumes from the event-bus-services exchange.
-// Published events go out as services.<SERVICE_NAME>.<topic>; listeners receive the topic
-// from any service (services.*.<topic>) through a durable queue named <SERVICE_NAME>.<topic>.
+// Published events go out as services.<APP_NAME>.<topic>; listeners receive the topic
+// from any service (services.*.<topic>) through a durable queue named <APP_NAME>.<topic>.
 type RabbitMQEventProvider struct {
 	connection     *amqp.Connection
 	publishChannel *amqp.Channel
@@ -31,7 +29,7 @@ type RabbitMQEventProvider struct {
 	serviceName    string
 	handlersMutex  sync.Mutex
 	handlers       map[string][]EventHandler // by topic
-	logger         *config.Logger
+	logger         *logger.Logger
 }
 
 var _ EventProvider = (*RabbitMQEventProvider)(nil)
@@ -53,18 +51,10 @@ func GetRabbitMQEventProviderInstance() (*RabbitMQEventProvider, error) {
 
 func newRabbitMQEventProvider() (*RabbitMQEventProvider, error) {
 	const location = "RabbitMQEventProvider.New"
-	logger := config.GetInstance()
+	appLogger := logger.GetInstance()
+	serviceName := config.GetConfig(config.AppName)
 
-	uri := os.Getenv("RABBITMQ_URI")
-	if uri == "" {
-		uri = defaultRabbitMQURI
-	}
-	serviceName := os.Getenv("SERVICE_NAME")
-	if serviceName == "" {
-		serviceName = defaultServiceName
-	}
-
-	connection, err := amqp.Dial(uri)
+	connection, err := amqp.Dial(config.GetConfig(config.RabbitMQURI))
 	if err != nil {
 		return nil, appErrors.CreateEventProviderError(appErrors.CreateEventProviderErrorInput{
 			Location:    location,
@@ -92,7 +82,7 @@ func newRabbitMQEventProvider() (*RabbitMQEventProvider, error) {
 		})
 	}
 
-	logger.Info(config.LogMessage{
+	appLogger.Info(logger.LogMessage{
 		Action:  "rabbitmq.connect",
 		Message: "Connected to RabbitMQ",
 		Data:    map[string]any{"exchange": eventBusExchange, "serviceName": serviceName},
@@ -103,7 +93,7 @@ func newRabbitMQEventProvider() (*RabbitMQEventProvider, error) {
 		publishChannel: publishChannel,
 		serviceName:    serviceName,
 		handlers:       map[string][]EventHandler{},
-		logger:         logger,
+		logger:         appLogger,
 	}, nil
 }
 
@@ -215,7 +205,7 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) StartListening(ctx context.C
 		}
 		consumerTags = append(consumerTags, consumerTag)
 
-		rabbitMQEventProvider.logger.Info(config.LogMessage{
+		rabbitMQEventProvider.logger.Info(logger.LogMessage{
 			Action:  "rabbitmq.listen",
 			Message: "Listening to topic",
 			Data:    map[string]any{"queue": queueName, "bindingKey": bindingKey, "handlers": len(topicHandlers)},
@@ -276,7 +266,7 @@ func (rabbitMQEventProvider *RabbitMQEventProvider) consume(ctx context.Context,
 		}
 
 		requeue := !delivery.Redelivered
-		rabbitMQEventProvider.logger.Error(config.LogMessage{
+		rabbitMQEventProvider.logger.Error(logger.LogMessage{
 			Action:  "rabbitmq.consume",
 			Message: "Failed to handle event",
 			Data: map[string]any{

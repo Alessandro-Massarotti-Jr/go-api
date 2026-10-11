@@ -2,21 +2,17 @@ package databases
 
 import (
 	"context"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
-const (
-	defaultMongoURI      = "mongodb://localhost:27017"
-	defaultMongoDatabase = "go_api"
-	connectTimeout       = 10 * time.Second
-)
+const connectTimeout = 10 * time.Second
 
 type Mongo struct {
 	client   *mongo.Client
@@ -37,18 +33,10 @@ func GetInstance() (*Mongo, error) {
 }
 
 func connect() (*Mongo, error) {
-	logger := config.GetInstance()
+	appLogger := logger.GetInstance()
+	databaseName := config.GetConfig(config.MongoDatabase)
 
-	uri := os.Getenv("MONGO_URI")
-	if uri == "" {
-		uri = defaultMongoURI
-	}
-	databaseName := os.Getenv("MONGO_DATABASE")
-	if databaseName == "" {
-		databaseName = defaultMongoDatabase
-	}
-
-	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(options.Client().ApplyURI(config.GetConfig(config.MongoURI)))
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +48,7 @@ func connect() (*Mongo, error) {
 		return nil, err
 	}
 
-	logger.Info(config.LogMessage{
+	appLogger.Info(logger.LogMessage{
 		Action:  "mongo.connect",
 		Message: "Connected to MongoDB",
 		Data:    map[string]any{"database": databaseName},

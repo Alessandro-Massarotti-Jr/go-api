@@ -1,4 +1,4 @@
-package config_test
+package logger_test
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 )
 
 const isoDateFormat = "2006-01-02T15:04:05.000Z07:00"
@@ -41,21 +41,21 @@ func captureStdout(test *testing.T, fn func()) string {
 }
 
 // useLevel sets the logger level for one test and restores the default level afterwards.
-func useLevel(test *testing.T, level config.LogLevel) *config.Logger {
+func useLevel(test *testing.T, level logger.LogLevel) *logger.Logger {
 	test.Helper()
 
-	logger := config.GetInstance()
-	logger.SetLevel(level)
-	test.Cleanup(func() { logger.SetLevel(config.LevelInfo) })
-	return logger
+	appLogger := logger.GetInstance()
+	appLogger.SetLevel(level)
+	test.Cleanup(func() { appLogger.SetLevel(logger.LevelInfo) })
+	return appLogger
 }
 
 func TestLogger(test *testing.T) {
 
 	test.Run("Get instance", func(test *testing.T) {
 		test.Run("Should be the same instance", func(test *testing.T) {
-			instance1 := config.GetInstance()
-			instance2 := config.GetInstance()
+			instance1 := logger.GetInstance()
+			instance2 := logger.GetInstance()
 			if instance1 != instance2 {
 				test.Errorf("Expected the same instance, got different instances")
 			}
@@ -66,32 +66,32 @@ func TestLogger(test *testing.T) {
 		test.Run("Should only print messages at or above the configured level", func(test *testing.T) {
 			methods := []struct {
 				name string
-				call func(*config.Logger, config.LogMessage)
+				call func(*logger.Logger, logger.LogMessage)
 			}{
-				{name: "Debug", call: (*config.Logger).Debug},
-				{name: "Info", call: (*config.Logger).Info},
-				{name: "Warn", call: (*config.Logger).Warn},
-				{name: "Error", call: (*config.Logger).Error},
+				{name: "Debug", call: (*logger.Logger).Debug},
+				{name: "Info", call: (*logger.Logger).Info},
+				{name: "Warn", call: (*logger.Logger).Warn},
+				{name: "Error", call: (*logger.Logger).Error},
 			}
 
 			levels := []struct {
-				level       config.LogLevel
+				level       logger.LogLevel
 				wantVisible []string
 			}{
-				{level: config.LevelDebug, wantVisible: []string{"Debug", "Info", "Warn", "Error"}},
-				{level: config.LevelInfo, wantVisible: []string{"Info", "Warn", "Error"}},
-				{level: config.LevelWarn, wantVisible: []string{"Warn", "Error"}},
-				{level: config.LevelError, wantVisible: []string{"Error"}},
-				{level: config.LevelSilent, wantVisible: []string{}},
+				{level: logger.LevelDebug, wantVisible: []string{"Debug", "Info", "Warn", "Error"}},
+				{level: logger.LevelInfo, wantVisible: []string{"Info", "Warn", "Error"}},
+				{level: logger.LevelWarn, wantVisible: []string{"Warn", "Error"}},
+				{level: logger.LevelError, wantVisible: []string{"Error"}},
+				{level: logger.LevelSilent, wantVisible: []string{}},
 			}
 
 			for _, tc := range levels {
 				test.Run(string(tc.level), func(test *testing.T) {
-					logger := useLevel(test, tc.level)
+					appLogger := useLevel(test, tc.level)
 
 					for _, method := range methods {
 						output := captureStdout(test, func() {
-							method.call(logger, config.LogMessage{Action: "main", Message: "set level"})
+							method.call(appLogger, logger.LogMessage{Action: "main", Message: "set level"})
 						})
 
 						printed := output != ""
@@ -105,11 +105,11 @@ func TestLogger(test *testing.T) {
 		})
 
 		test.Run("Should allow changing the level more than once", func(test *testing.T) {
-			logger := useLevel(test, config.LevelError)
-			logger.SetLevel(config.LevelDebug)
+			appLogger := useLevel(test, logger.LevelError)
+			appLogger.SetLevel(logger.LevelDebug)
 
 			output := captureStdout(test, func() {
-				logger.Debug(config.LogMessage{Action: "main", Message: "visible"})
+				appLogger.Debug(logger.LogMessage{Action: "main", Message: "visible"})
 			})
 
 			if output == "" {
@@ -117,22 +117,22 @@ func TestLogger(test *testing.T) {
 			}
 		})
 
-		invalidLevels := []config.LogLevel{"banana", "", "INFO", " info"}
+		invalidLevels := []logger.LogLevel{"banana", "", "INFO", " info"}
 		for _, invalid := range invalidLevels {
 			test.Run(fmt.Sprintf("Should ignore invalid level %q and keep the previous one", invalid), func(test *testing.T) {
-				logger := useLevel(test, config.LevelWarn)
-				logger.SetLevel(invalid)
+				appLogger := useLevel(test, logger.LevelWarn)
+				appLogger.SetLevel(invalid)
 
 				// if the invalid level had been applied, its weight would be 0 and Info would print
 				infoOutput := captureStdout(test, func() {
-					logger.Info(config.LogMessage{Action: "main", Message: "hidden"})
+					appLogger.Info(logger.LogMessage{Action: "main", Message: "hidden"})
 				})
 				if infoOutput != "" {
 					test.Errorf("Expected Info to stay hidden with level warn, got %q", infoOutput)
 				}
 
 				warnOutput := captureStdout(test, func() {
-					logger.Warn(config.LogMessage{Action: "main", Message: "visible"})
+					appLogger.Warn(logger.LogMessage{Action: "main", Message: "visible"})
 				})
 				if warnOutput == "" {
 					test.Error("Expected Warn to still print with level warn, got nothing")
@@ -143,10 +143,10 @@ func TestLogger(test *testing.T) {
 
 	test.Run("Info", func(test *testing.T) {
 		test.Run("Should print the message in the [date][INFO] json format", func(test *testing.T) {
-			logger := useLevel(test, config.LevelInfo)
+			appLogger := useLevel(test, logger.LevelInfo)
 
 			output := captureStdout(test, func() {
-				logger.Info(config.LogMessage{
+				appLogger.Info(logger.LogMessage{
 					Action:  "user.create",
 					Message: "user created",
 					Data:    map[string]any{"id": 1},
@@ -188,10 +188,10 @@ func TestLogger(test *testing.T) {
 		})
 
 		test.Run("Should omit data when it is nil", func(test *testing.T) {
-			logger := useLevel(test, config.LevelInfo)
+			appLogger := useLevel(test, logger.LevelInfo)
 
 			output := captureStdout(test, func() {
-				logger.Info(config.LogMessage{Action: "main", Message: "no data"})
+				appLogger.Info(logger.LogMessage{Action: "main", Message: "no data"})
 			})
 
 			matches := logLinePattern.FindStringSubmatch(output)
@@ -206,10 +206,10 @@ func TestLogger(test *testing.T) {
 		})
 
 		test.Run("Should print when level is debug", func(test *testing.T) {
-			logger := useLevel(test, config.LevelDebug)
+			appLogger := useLevel(test, logger.LevelDebug)
 
 			output := captureStdout(test, func() {
-				logger.Info(config.LogMessage{Action: "main", Message: "visible"})
+				appLogger.Info(logger.LogMessage{Action: "main", Message: "visible"})
 			})
 
 			if output == "" {
@@ -217,13 +217,13 @@ func TestLogger(test *testing.T) {
 			}
 		})
 
-		levelsAboveInfo := []config.LogLevel{config.LevelWarn, config.LevelError, config.LevelSilent}
+		levelsAboveInfo := []logger.LogLevel{logger.LevelWarn, logger.LevelError, logger.LevelSilent}
 		for _, level := range levelsAboveInfo {
 			test.Run("Should not print when level is "+string(level), func(test *testing.T) {
-				logger := useLevel(test, level)
+				appLogger := useLevel(test, level)
 
 				output := captureStdout(test, func() {
-					logger.Info(config.LogMessage{Action: "main", Message: "hidden"})
+					appLogger.Info(logger.LogMessage{Action: "main", Message: "hidden"})
 				})
 
 				if output != "" {
@@ -235,38 +235,38 @@ func TestLogger(test *testing.T) {
 
 	test.Run("Debug", func(test *testing.T) {
 		testLogMethod(test, logMethodCase{
-			call:      (*config.Logger).Debug,
+			call:      (*logger.Logger).Debug,
 			label:     "DEBUG",
-			visibleAt: []config.LogLevel{config.LevelDebug},
-			hiddenAt:  []config.LogLevel{config.LevelInfo, config.LevelWarn, config.LevelError, config.LevelSilent},
+			visibleAt: []logger.LogLevel{logger.LevelDebug},
+			hiddenAt:  []logger.LogLevel{logger.LevelInfo, logger.LevelWarn, logger.LevelError, logger.LevelSilent},
 		})
 	})
 
 	test.Run("Warn", func(test *testing.T) {
 		testLogMethod(test, logMethodCase{
-			call:      (*config.Logger).Warn,
+			call:      (*logger.Logger).Warn,
 			label:     "WARN",
-			visibleAt: []config.LogLevel{config.LevelDebug, config.LevelInfo, config.LevelWarn},
-			hiddenAt:  []config.LogLevel{config.LevelError, config.LevelSilent},
+			visibleAt: []logger.LogLevel{logger.LevelDebug, logger.LevelInfo, logger.LevelWarn},
+			hiddenAt:  []logger.LogLevel{logger.LevelError, logger.LevelSilent},
 		})
 	})
 
 	test.Run("Error", func(test *testing.T) {
 		testLogMethod(test, logMethodCase{
-			call:      (*config.Logger).Error,
+			call:      (*logger.Logger).Error,
 			label:     "ERROR",
-			visibleAt: []config.LogLevel{config.LevelDebug, config.LevelInfo, config.LevelWarn, config.LevelError},
-			hiddenAt:  []config.LogLevel{config.LevelSilent},
+			visibleAt: []logger.LogLevel{logger.LevelDebug, logger.LevelInfo, logger.LevelWarn, logger.LevelError},
+			hiddenAt:  []logger.LogLevel{logger.LevelSilent},
 		})
 	})
 
 }
 
 type logMethodCase struct {
-	call      func(*config.Logger, config.LogMessage)
+	call      func(*logger.Logger, logger.LogMessage)
 	label     string
-	visibleAt []config.LogLevel
-	hiddenAt  []config.LogLevel
+	visibleAt []logger.LogLevel
+	hiddenAt  []logger.LogLevel
 }
 
 // testLogMethod runs the same set of subtests for any of the logger methods.
@@ -274,10 +274,10 @@ func testLogMethod(test *testing.T, tc logMethodCase) {
 	test.Helper()
 
 	test.Run("Should print the message in the [date]["+tc.label+"] json format", func(test *testing.T) {
-		logger := useLevel(test, tc.visibleAt[0])
+		appLogger := useLevel(test, tc.visibleAt[0])
 
 		output := captureStdout(test, func() {
-			tc.call(logger, config.LogMessage{
+			tc.call(appLogger, logger.LogMessage{
 				Action:  "user.create",
 				Message: "user created",
 				Data:    map[string]any{"id": 1},
@@ -305,10 +305,10 @@ func testLogMethod(test *testing.T, tc logMethodCase) {
 
 	for _, level := range tc.visibleAt {
 		test.Run("Should print when level is "+string(level), func(test *testing.T) {
-			logger := useLevel(test, level)
+			appLogger := useLevel(test, level)
 
 			output := captureStdout(test, func() {
-				tc.call(logger, config.LogMessage{Action: "main", Message: "visible"})
+				tc.call(appLogger, logger.LogMessage{Action: "main", Message: "visible"})
 			})
 
 			if output == "" {
@@ -319,10 +319,10 @@ func testLogMethod(test *testing.T, tc logMethodCase) {
 
 	for _, level := range tc.hiddenAt {
 		test.Run("Should not print when level is "+string(level), func(test *testing.T) {
-			logger := useLevel(test, level)
+			appLogger := useLevel(test, level)
 
 			output := captureStdout(test, func() {
-				tc.call(logger, config.LogMessage{Action: "main", Message: "hidden"})
+				tc.call(appLogger, logger.LogMessage{Action: "main", Message: "hidden"})
 			})
 
 			if output != "" {

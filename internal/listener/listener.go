@@ -5,16 +5,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Alessandro-Massarotti-Jr/go-api/internal/config"
+	"github.com/Alessandro-Massarotti-Jr/go-api/internal/logger"
 	"github.com/Alessandro-Massarotti-Jr/go-api/internal/providers"
 )
 
 type Listener struct {
-	logger *config.Logger
+	logger *logger.Logger
 }
 
 func Create() *Listener {
-	return &Listener{logger: config.GetInstance()}
+	return &Listener{logger: logger.GetInstance()}
 }
 
 // Start registers every listener on the RabbitMQ event provider and consumes events
@@ -30,9 +30,9 @@ func (listener *Listener) Start() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	listener.logger.Info(config.LogMessage{Action: "listener.start", Message: "Listener started"})
+	listener.logger.Info(logger.LogMessage{Action: "listener.start", Message: "Listener started"})
 	err = eventProvider.StartListening(ctx)
-	listener.logger.Info(config.LogMessage{Action: "listener.shutdown", Message: "Listener stopped"})
+	listener.logger.Info(logger.LogMessage{Action: "listener.shutdown", Message: "Listener stopped"})
 
 	return err
 }
