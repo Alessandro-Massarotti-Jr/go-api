@@ -24,6 +24,17 @@ func NewGetPostController(input NewGetPostControllerInput) *GetPostController {
 	return &GetPostController{getPostUseCase: input.GetPostUseCase}
 }
 
+// Handle returns a post by id.
+//
+//	@Summary	Get post
+//	@Tags		posts
+//	@Produce	json
+//	@Param		id	path		string	true	"Post id (UUID)"	format(uuid)
+//	@Success	200	{object}	entities.Post
+//	@Failure	400	{object}	appErrors.AppError
+//	@Failure	404	{object}	appErrors.AppError
+//	@Failure	500	{object}	appErrors.AppError
+//	@Router		/posts/{id} [get]
 func (getPostController *GetPostController) Handle(context *gin.Context) {
 	const location = "GetPostController.Handle"
 

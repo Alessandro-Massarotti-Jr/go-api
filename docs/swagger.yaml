@@ -1,0 +1,235 @@
+basePath: /
+definitions:
+  appErrors.AppError:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      level:
+        $ref: '#/definitions/appErrors.ErrorLevel'
+      location:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+    type: object
+  appErrors.ErrorLevel:
+    enum:
+    - low
+    - medium
+    - high
+    type: string
+    x-enum-varnames:
+    - LevelLow
+    - LevelMedium
+    - LevelHigh
+  createpost.createPostRequest:
+    properties:
+      content:
+        type: string
+      title:
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  entities.Post:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  repositories.PaginatedPosts:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/entities.Post'
+        type: array
+      nextCursor:
+        type: string
+    type: object
+  updatepost.updatePostBodyRequest:
+    properties:
+      content:
+        minLength: 1
+        type: string
+      title:
+        minLength: 1
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Estudo de estruturar um projeto com GoLang.
+  title: Go API
+  version: "1.0"
+paths:
+  /posts:
+    get:
+      parameters:
+      - description: NextCursor returned by the previous page
+        in: query
+        name: cursor
+        type: string
+      - default: 20
+        description: Page size
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repositories.PaginatedPosts'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+      summary: List posts
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Post data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/createpost.createPostRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Post'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+      summary: Create post
+      tags:
+      - posts
+  /posts/{id}:
+    delete:
+      parameters:
+      - description: Post id (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+      summary: Delete post
+      tags:
+      - posts
+    get:
+      parameters:
+      - description: Post id (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Post'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+      summary: Get post
+      tags:
+      - posts
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Post id (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/updatepost.updatePostBodyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Post'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/appErrors.AppError'
+      summary: Update post
+      tags:
+      - posts
+swagger: "2.0"

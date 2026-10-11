@@ -24,6 +24,18 @@ func NewCreatePostController(input NewCreatePostControllerInput) *CreatePostCont
 	return &CreatePostController{createPostUseCase: input.CreatePostUseCase}
 }
 
+// Handle creates a post.
+//
+//	@Summary	Create post
+//	@Tags		posts
+//	@Accept		json
+//	@Produce	json
+//	@Param		body	body		createPostRequest	true	"Post data"
+//	@Success	201		{object}	entities.Post
+//	@Failure	400		{object}	appErrors.AppError
+//	@Failure	409		{object}	appErrors.AppError
+//	@Failure	500		{object}	appErrors.AppError
+//	@Router		/posts [post]
 func (createPostController *CreatePostController) Handle(context *gin.Context) {
 	const location = "CreatePostController.Handle"
 

@@ -24,6 +24,17 @@ func NewListPostsController(input NewListPostsControllerInput) *ListPostsControl
 	return &ListPostsController{listPostsUseCase: input.ListPostsUseCase}
 }
 
+// Handle lists posts with cursor pagination.
+//
+//	@Summary	List posts
+//	@Tags		posts
+//	@Produce	json
+//	@Param		cursor	query		string	false	"NextCursor returned by the previous page"
+//	@Param		limit	query		int		false	"Page size"	minimum(1)	maximum(100)	default(20)
+//	@Success	200		{object}	repositories.PaginatedPosts
+//	@Failure	400		{object}	appErrors.AppError
+//	@Failure	500		{object}	appErrors.AppError
+//	@Router		/posts [get]
 func (listPostsController *ListPostsController) Handle(context *gin.Context) {
 	const location = "ListPostsController.Handle"
 

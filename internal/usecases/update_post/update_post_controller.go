@@ -30,6 +30,19 @@ func NewUpdatePostController(input NewUpdatePostControllerInput) *UpdatePostCont
 	return &UpdatePostController{updatePostUseCase: input.UpdatePostUseCase}
 }
 
+// Handle partially updates a post. At least one field must be provided.
+//
+//	@Summary	Update post
+//	@Tags		posts
+//	@Accept		json
+//	@Produce	json
+//	@Param		id		path		string					true	"Post id (UUID)"	format(uuid)
+//	@Param		body	body		updatePostBodyRequest	true	"Fields to update"
+//	@Success	200		{object}	entities.Post
+//	@Failure	400		{object}	appErrors.AppError
+//	@Failure	404		{object}	appErrors.AppError
+//	@Failure	500		{object}	appErrors.AppError
+//	@Router		/posts/{id} [patch]
 func (updatePostController *UpdatePostController) Handle(context *gin.Context) {
 	const location = "UpdatePostController.Handle"
 

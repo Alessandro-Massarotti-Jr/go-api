@@ -24,6 +24,17 @@ func NewDeletePostController(input NewDeletePostControllerInput) *DeletePostCont
 	return &DeletePostController{deletePostUseCase: input.DeletePostUseCase}
 }
 
+// Handle deletes a post by id.
+//
+//	@Summary	Delete post
+//	@Tags		posts
+//	@Produce	json
+//	@Param		id	path	string	true	"Post id (UUID)"	format(uuid)
+//	@Success	204
+//	@Failure	400	{object}	appErrors.AppError
+//	@Failure	404	{object}	appErrors.AppError
+//	@Failure	500	{object}	appErrors.AppError
+//	@Router		/posts/{id} [delete]
 func (deletePostController *DeletePostController) Handle(context *gin.Context) {
 	const location = "DeletePostController.Handle"
 
