@@ -30,10 +30,10 @@ func NewGetPostController(input NewGetPostControllerInput) *GetPostController {
 //	@Tags		posts
 //	@Produce	json
 //	@Param		id	path		string	true	"Post id (UUID)"	format(uuid)
-//	@Success	200	{object}	entities.Post
-//	@Failure	400	{object}	appErrors.AppError
-//	@Failure	404	{object}	appErrors.AppError
-//	@Failure	500	{object}	appErrors.AppError
+//	@Success	200	{object}	object{message=string,data=entities.Post}
+//	@Failure	400	{object}	object{error=appErrors.AppError}
+//	@Failure	404	{object}	object{error=appErrors.AppError}
+//	@Failure	500	{object}	object{error=appErrors.AppError}
 //	@Router		/posts/{id} [get]
 func (getPostController *GetPostController) Handle(context *gin.Context) {
 	const location = "GetPostController.Handle"
@@ -55,5 +55,8 @@ func (getPostController *GetPostController) Handle(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, post)
+	context.JSON(http.StatusOK, gin.H{
+		"message": "Post retrieved successfully",
+		"data":    post,
+	})
 }

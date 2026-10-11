@@ -105,7 +105,7 @@ func TestListPostsController(test *testing.T) {
 			}
 		})
 
-		test.Run("Should respond 200 with the page as JSON", func(test *testing.T) {
+		test.Run("Should respond 200 with the page wrapped in the response envelope", func(test *testing.T) {
 			createdAt := time.Date(2025, 1, 1, 10, 0, 0, 0, time.UTC)
 			nextCursor := "next-cursor"
 			listPostsUseCase := &listPostsUseCaseMock{
@@ -124,7 +124,7 @@ func TestListPostsController(test *testing.T) {
 			if recorder.Code != http.StatusOK {
 				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusOK)
 			}
-			want := `{"items":[{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"}],"nextCursor":"next-cursor"}`
+			want := `{"data":{"items":[{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"}],"nextCursor":"next-cursor"},"message":"Posts listed successfully"}`
 			if recorder.Body.String() != want {
 				test.Errorf("Body = %s, want %s", recorder.Body.String(), want)
 			}

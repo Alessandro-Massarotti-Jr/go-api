@@ -82,7 +82,7 @@ func TestDeletePostController(test *testing.T) {
 			}
 		})
 
-		test.Run("Should respond 204 with no body", func(test *testing.T) {
+		test.Run("Should respond 200 with the deletion message", func(test *testing.T) {
 			deletePostUseCase := &deletePostUseCaseMock{
 				ExecuteFunc: func(ctx context.Context, input deletepost.DeletePostInput) error {
 					return nil
@@ -92,13 +92,13 @@ func TestDeletePostController(test *testing.T) {
 			ginContext, recorder := newDeletePostRequest(test, validPostID)
 
 			deletePostController.Handle(ginContext)
-			ginContext.Writer.WriteHeaderNow()
 
-			if recorder.Code != http.StatusNoContent {
-				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusNoContent)
+			if recorder.Code != http.StatusOK {
+				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusOK)
 			}
-			if recorder.Body.Len() != 0 {
-				test.Errorf("Body = %s, want empty", recorder.Body.String())
+			want := `{"data":null,"message":"Post deleted successfully"}`
+			if recorder.Body.String() != want {
+				test.Errorf("Body = %s, want %s", recorder.Body.String(), want)
 			}
 			if len(ginContext.Errors) != 0 {
 				test.Errorf("Expected no errors registered, got %v", ginContext.Errors)

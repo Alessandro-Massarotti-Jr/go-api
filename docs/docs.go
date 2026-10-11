@@ -45,19 +45,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/repositories.PaginatedPosts"
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/repositories.PaginatedPosts"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     }
                 }
@@ -88,25 +106,48 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/entities.Post"
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/entities.Post"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     }
                 }
@@ -135,25 +176,48 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.Post"
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/entities.Post"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     }
                 }
@@ -177,25 +241,51 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "object"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     }
                 }
@@ -234,25 +324,48 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entities.Post"
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "$ref": "#/definitions/entities.Post"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/appErrors.AppError"
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "$ref": "#/definitions/appErrors.AppError"
+                                }
+                            }
                         }
                     }
                 }

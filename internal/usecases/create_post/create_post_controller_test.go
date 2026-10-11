@@ -83,7 +83,7 @@ func TestCreatePostController(test *testing.T) {
 			}
 		})
 
-		test.Run("Should respond 201 with the created post as JSON", func(test *testing.T) {
+		test.Run("Should respond 201 with the created post wrapped in the response envelope", func(test *testing.T) {
 			createdAt := time.Date(2025, 1, 1, 10, 0, 0, 0, time.UTC)
 			createPostUseCase := &createPostUseCaseMock{
 				ExecuteFunc: func(ctx context.Context, input createpost.CreatePostInput) (*entities.Post, error) {
@@ -98,7 +98,7 @@ func TestCreatePostController(test *testing.T) {
 			if recorder.Code != http.StatusCreated {
 				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusCreated)
 			}
-			want := `{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"}`
+			want := `{"data":{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"},"message":"Post created successfully"}`
 			if recorder.Body.String() != want {
 				test.Errorf("Body = %s, want %s", recorder.Body.String(), want)
 			}

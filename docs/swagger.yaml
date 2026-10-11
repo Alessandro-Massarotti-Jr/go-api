@@ -91,15 +91,26 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/repositories.PaginatedPosts'
+            properties:
+              data:
+                $ref: '#/definitions/repositories.PaginatedPosts'
+              message:
+                type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
       summary: List posts
       tags:
       - posts
@@ -119,19 +130,33 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/entities.Post'
+            properties:
+              data:
+                $ref: '#/definitions/entities.Post'
+              message:
+                type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
       summary: Create post
       tags:
       - posts
@@ -147,20 +172,36 @@ paths:
       produces:
       - application/json
       responses:
-        "204":
-          description: No Content
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                type: object
+              message:
+                type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
       summary: Delete post
       tags:
       - posts
@@ -178,19 +219,33 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entities.Post'
+            properties:
+              data:
+                $ref: '#/definitions/entities.Post'
+              message:
+                type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
       summary: Get post
       tags:
       - posts
@@ -216,19 +271,33 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/entities.Post'
+            properties:
+              data:
+                $ref: '#/definitions/entities.Post'
+              message:
+                type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/appErrors.AppError'
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
       summary: Update post
       tags:
       - posts

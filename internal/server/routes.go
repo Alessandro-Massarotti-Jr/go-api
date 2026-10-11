@@ -16,7 +16,7 @@ import (
 
 func RegisterRoutes(engine *gin.Engine) {
 	engine.GET("/healthy", func(context *gin.Context) {
-		context.JSON(http.StatusOK, gin.H{"message": "ok"})
+		context.JSON(http.StatusOK, gin.H{"message": "ok", "data": nil})
 	})
 
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

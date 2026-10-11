@@ -31,10 +31,10 @@ func NewCreatePostController(input NewCreatePostControllerInput) *CreatePostCont
 //	@Accept		json
 //	@Produce	json
 //	@Param		body	body		createPostRequest	true	"Post data"
-//	@Success	201		{object}	entities.Post
-//	@Failure	400		{object}	appErrors.AppError
-//	@Failure	409		{object}	appErrors.AppError
-//	@Failure	500		{object}	appErrors.AppError
+//	@Success	201		{object}	object{message=string,data=entities.Post}
+//	@Failure	400		{object}	object{error=appErrors.AppError}
+//	@Failure	409		{object}	object{error=appErrors.AppError}
+//	@Failure	500		{object}	object{error=appErrors.AppError}
 //	@Router		/posts [post]
 func (createPostController *CreatePostController) Handle(context *gin.Context) {
 	const location = "CreatePostController.Handle"
@@ -57,5 +57,8 @@ func (createPostController *CreatePostController) Handle(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusCreated, post)
+	context.JSON(http.StatusCreated, gin.H{
+		"message": "Post created successfully",
+		"data":    post,
+	})
 }

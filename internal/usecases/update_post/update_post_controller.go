@@ -38,10 +38,10 @@ func NewUpdatePostController(input NewUpdatePostControllerInput) *UpdatePostCont
 //	@Produce	json
 //	@Param		id		path		string					true	"Post id (UUID)"	format(uuid)
 //	@Param		body	body		updatePostBodyRequest	true	"Fields to update"
-//	@Success	200		{object}	entities.Post
-//	@Failure	400		{object}	appErrors.AppError
-//	@Failure	404		{object}	appErrors.AppError
-//	@Failure	500		{object}	appErrors.AppError
+//	@Success	200		{object}	object{message=string,data=entities.Post}
+//	@Failure	400		{object}	object{error=appErrors.AppError}
+//	@Failure	404		{object}	object{error=appErrors.AppError}
+//	@Failure	500		{object}	object{error=appErrors.AppError}
 //	@Router		/posts/{id} [patch]
 func (updatePostController *UpdatePostController) Handle(context *gin.Context) {
 	const location = "UpdatePostController.Handle"
@@ -81,5 +81,8 @@ func (updatePostController *UpdatePostController) Handle(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, post)
+	context.JSON(http.StatusOK, gin.H{
+		"message": "Post updated successfully",
+		"data":    post,
+	})
 }

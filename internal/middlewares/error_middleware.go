@@ -8,7 +8,8 @@ import (
 )
 
 // ErrorHandler turns the last error registered by a handler (via context.Error)
-// into the JSON response. AppErrors keep their HTTP status; any other error becomes
+// into a JSON response wrapped as {"error": ...}.
+// AppErrors keep their HTTP status; any other error becomes
 // a generic 500 so internal details are not exposed.
 func ErrorHandler() gin.HandlerFunc {
 	return func(context *gin.Context) {
@@ -18,7 +19,7 @@ func ErrorHandler() gin.HandlerFunc {
 			return
 		}
 		if appError, isAppError := errors.AsType[*appErrors.AppError](lastError.Err); isAppError {
-			context.JSON(appError.HTTPStatus, appError)
+			context.JSON(appError.HTTPStatus, gin.H{"error": appError})
 			return
 		}
 
@@ -27,6 +28,6 @@ func ErrorHandler() gin.HandlerFunc {
 			OriginError: lastError.Err,
 		})
 
-		context.JSON(genericError.HTTPStatus, genericError)
+		context.JSON(genericError.HTTPStatus, gin.H{"error": genericError})
 	}
 }

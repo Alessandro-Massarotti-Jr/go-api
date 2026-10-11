@@ -84,7 +84,7 @@ func TestGetPostController(test *testing.T) {
 			}
 		})
 
-		test.Run("Should respond 200 with the post as JSON", func(test *testing.T) {
+		test.Run("Should respond 200 with the post wrapped in the response envelope", func(test *testing.T) {
 			createdAt := time.Date(2025, 1, 1, 10, 0, 0, 0, time.UTC)
 			getPostUseCase := &getPostUseCaseMock{
 				ExecuteFunc: func(ctx context.Context, input getpost.GetPostInput) (*entities.Post, error) {
@@ -99,7 +99,7 @@ func TestGetPostController(test *testing.T) {
 			if recorder.Code != http.StatusOK {
 				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusOK)
 			}
-			want := `{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"}`
+			want := `{"data":{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"},"message":"Post retrieved successfully"}`
 			if recorder.Body.String() != want {
 				test.Errorf("Body = %s, want %s", recorder.Body.String(), want)
 			}

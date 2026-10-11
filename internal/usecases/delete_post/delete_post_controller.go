@@ -29,11 +29,11 @@ func NewDeletePostController(input NewDeletePostControllerInput) *DeletePostCont
 //	@Summary	Delete post
 //	@Tags		posts
 //	@Produce	json
-//	@Param		id	path	string	true	"Post id (UUID)"	format(uuid)
-//	@Success	204
-//	@Failure	400	{object}	appErrors.AppError
-//	@Failure	404	{object}	appErrors.AppError
-//	@Failure	500	{object}	appErrors.AppError
+//	@Param		id	path		string	true	"Post id (UUID)"	format(uuid)
+//	@Success	200	{object}	object{message=string,data=object}
+//	@Failure	400	{object}	object{error=appErrors.AppError}
+//	@Failure	404	{object}	object{error=appErrors.AppError}
+//	@Failure	500	{object}	object{error=appErrors.AppError}
 //	@Router		/posts/{id} [delete]
 func (deletePostController *DeletePostController) Handle(context *gin.Context) {
 	const location = "DeletePostController.Handle"
@@ -55,5 +55,8 @@ func (deletePostController *DeletePostController) Handle(context *gin.Context) {
 		return
 	}
 
-	context.Status(http.StatusNoContent)
+	context.JSON(http.StatusOK, gin.H{
+		"message": "Post deleted successfully",
+		"data":    nil,
+	})
 }
