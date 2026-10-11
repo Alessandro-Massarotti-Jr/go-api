@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	createpost "github.com/Alessandro-Massarotti-Jr/go-api/internal/usecases/create_post"
+	deletepost "github.com/Alessandro-Massarotti-Jr/go-api/internal/usecases/delete_post"
 	getpost "github.com/Alessandro-Massarotti-Jr/go-api/internal/usecases/get_post"
 	listposts "github.com/Alessandro-Massarotti-Jr/go-api/internal/usecases/list_posts"
 	updatepost "github.com/Alessandro-Massarotti-Jr/go-api/internal/usecases/update_post"
@@ -19,4 +20,5 @@ func RegisterRoutes(engine *gin.Engine) {
 	engine.GET("/posts", listposts.Controller.Handle)
 	engine.GET("/posts/:id", getpost.Controller.Handle)
 	engine.PATCH("/posts/:id", updatepost.Controller.Handle)
+	engine.DELETE("/posts/:id", deletepost.Controller.Handle)
 }
