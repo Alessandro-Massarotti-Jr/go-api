@@ -36,6 +36,10 @@ func (postRepositoryMock *postRepositoryMock) Delete(ctx context.Context, input 
 	panic("postRepositoryMock.Delete should not be called")
 }
 
+func (postRepositoryMock *postRepositoryMock) IncrementTotalComments(ctx context.Context, input repositories.IncrementPostTotalCommentsInput) error {
+	panic("postRepositoryMock.IncrementTotalComments should not be called")
+}
+
 func TestListPostsUseCase(test *testing.T) {
 
 	test.Run("Execute", func(test *testing.T) {

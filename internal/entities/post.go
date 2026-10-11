@@ -9,21 +9,23 @@ import (
 type PostId string
 
 type Post struct {
-	ID        PostId    `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID            PostId    `json:"id"`
+	Title         string    `json:"title"`
+	Content       string    `json:"content"`
+	TotalComments int       `json:"totalComments"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 // CreatePostInput holds the data used to create a Post.
 // Pointer fields are optional: when nil, a default value is applied.
 type CreatePostInput struct {
-	ID        *PostId // default: new UUID
-	Title     string
-	Content   string
-	CreatedAt *time.Time // default: time.Now()
-	UpdatedAt *time.Time // default: time.Now()
+	ID            *PostId // default: new UUID
+	Title         string
+	Content       string
+	TotalComments int        // default: 0
+	CreatedAt     *time.Time // default: time.Now()
+	UpdatedAt     *time.Time // default: time.Now()
 }
 
 func Create(input CreatePostInput) *Post {
@@ -51,10 +53,11 @@ func Create(input CreatePostInput) *Post {
 	}
 
 	return &Post{
-		ID:        id,
-		Title:     input.Title,
-		Content:   input.Content,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		ID:            id,
+		Title:         input.Title,
+		Content:       input.Content,
+		TotalComments: input.TotalComments,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
 	}
 }

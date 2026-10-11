@@ -34,6 +34,13 @@ definitions:
     - content
     - title
     type: object
+  createpostcomment.createPostCommentBodyRequest:
+    properties:
+      comment:
+        type: string
+    required:
+    - comment
+    type: object
   entities.Post:
     properties:
       content:
@@ -44,7 +51,31 @@ definitions:
         type: string
       title:
         type: string
+      totalComments:
+        type: integer
       updatedAt:
+        type: string
+    type: object
+  entities.PostComment:
+    properties:
+      comment:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      postId:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  repositories.PaginatedPostComments:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/entities.PostComment'
+        type: array
+      nextCursor:
         type: string
     type: object
   repositories.PaginatedPosts:
@@ -301,4 +332,112 @@ paths:
       summary: Update post
       tags:
       - posts
+  /posts/{id}/comments:
+    get:
+      parameters:
+      - description: Post id (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: NextCursor returned by the previous page
+        in: query
+        name: cursor
+        type: string
+      - default: 20
+        description: Page size
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/repositories.PaginatedPostComments'
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
+      summary: List post comments
+      tags:
+      - post comments
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Post id (UUID)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Comment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/createpostcomment.createPostCommentBodyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              data:
+                $ref: '#/definitions/entities.PostComment'
+              message:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                $ref: '#/definitions/appErrors.AppError'
+            type: object
+      summary: Create post comment
+      tags:
+      - post comments
 swagger: "2.0"

@@ -20,6 +20,10 @@ func (postRepositoryMock *postRepositoryMock) Delete(ctx context.Context, input 
 	return postRepositoryMock.DeleteFunc(ctx, input)
 }
 
+func (postRepositoryMock *postRepositoryMock) IncrementTotalComments(ctx context.Context, input repositories.IncrementPostTotalCommentsInput) error {
+	panic("postRepositoryMock.IncrementTotalComments should not be called")
+}
+
 func (postRepositoryMock *postRepositoryMock) FindAll(ctx context.Context, input repositories.FindPostsInput) (*repositories.PaginatedPosts, error) {
 	panic("postRepositoryMock.FindAll should not be called")
 }

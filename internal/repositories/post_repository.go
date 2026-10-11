@@ -37,10 +37,15 @@ type DeletePostInput struct {
 	ID entities.PostId
 }
 
+type IncrementPostTotalCommentsInput struct {
+	ID entities.PostId
+}
+
 type PostRepository interface {
 	FindAll(ctx context.Context, input FindPostsInput) (*PaginatedPosts, error)
 	FindById(ctx context.Context, input FindPostByIdInput) (*entities.Post, error)
 	Create(ctx context.Context, post *entities.Post) (*entities.Post, error)
 	Update(ctx context.Context, input UpdatePostInput) (*entities.Post, error)
 	Delete(ctx context.Context, input DeletePostInput) error
+	IncrementTotalComments(ctx context.Context, input IncrementPostTotalCommentsInput) error
 }

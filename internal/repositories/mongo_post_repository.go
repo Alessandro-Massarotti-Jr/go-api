@@ -2,8 +2,6 @@ package repositories
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"sync"
 	"time"
@@ -16,13 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
-
-// postCursor identifies the last item of a page. Posts are sorted by createdAt desc
-// with id as tiebreaker, so both are needed to resume from the right position.
-type postCursor struct {
-	CreatedAt time.Time `json:"createdAt"`
-	ID        string    `json:"id"`
-}
 
 type MongoPostRepository struct {
 	postCollection *mongo.Collection
@@ -127,7 +118,7 @@ func (mongoPostRepository *MongoPostRepository) FindAll(ctx context.Context, inp
 	if len(documents) > limit {
 		documents = documents[:limit]
 		last := documents[len(documents)-1]
-		encoded, err := encodeCursor(postCursor{CreatedAt: last.CreatedAt, ID: last.ID})
+		encoded, err := encodeCursor(pageCursor{CreatedAt: last.CreatedAt, ID: last.ID})
 		if err != nil {
 			return nil, appErrors.CreatePostRepositoryError(appErrors.CreatePostRepositoryErrorInput{
 				Location:    location,
@@ -246,15 +237,41 @@ func (mongoPostRepository *MongoPostRepository) Delete(ctx context.Context, inpu
 	return nil
 }
 
+func (mongoPostRepository *MongoPostRepository) IncrementTotalComments(ctx context.Context, input IncrementPostTotalCommentsInput) error {
+	const location = "MongoPostRepository.IncrementTotalComments"
+
+	result, err := mongoPostRepository.postCollection.UpdateOne(
+		ctx,
+		bson.M{"id": string(input.ID)},
+		bson.M{"$inc": bson.M{"totalComments": 1}},
+	)
+	if err != nil {
+		return appErrors.CreatePostRepositoryError(appErrors.CreatePostRepositoryErrorInput{
+			Location:    location,
+			Message:     "Failed to increment post total comments",
+			OriginError: err,
+		})
+	}
+	if result.MatchedCount == 0 {
+		return appErrors.CreatePostNotFoundError(appErrors.CreatePostNotFoundErrorInput{
+			Location: location,
+			ID:       string(input.ID),
+		})
+	}
+
+	return nil
+}
+
 // toSchema truncates dates to milliseconds, the precision Mongo stores,
 // so the entity built back from the schema matches what is persisted.
 func toSchema(post *entities.Post) schemas.PostSchema {
 	return schemas.PostSchema{
-		ID:        string(post.ID),
-		Title:     post.Title,
-		Content:   post.Content,
-		CreatedAt: post.CreatedAt.UTC().Truncate(time.Millisecond),
-		UpdatedAt: post.UpdatedAt.UTC().Truncate(time.Millisecond),
+		ID:            string(post.ID),
+		Title:         post.Title,
+		Content:       post.Content,
+		TotalComments: post.TotalComments,
+		CreatedAt:     post.CreatedAt.UTC().Truncate(time.Millisecond),
+		UpdatedAt:     post.UpdatedAt.UTC().Truncate(time.Millisecond),
 	}
 }
 
@@ -264,33 +281,11 @@ func toEntity(schema schemas.PostSchema) *entities.Post {
 	updatedAt := schema.UpdatedAt.UTC()
 
 	return entities.Create(entities.CreatePostInput{
-		ID:        &id,
-		Title:     schema.Title,
-		Content:   schema.Content,
-		CreatedAt: &createdAt,
-		UpdatedAt: &updatedAt,
+		ID:            &id,
+		Title:         schema.Title,
+		Content:       schema.Content,
+		TotalComments: schema.TotalComments,
+		CreatedAt:     &createdAt,
+		UpdatedAt:     &updatedAt,
 	})
-}
-
-func encodeCursor(cursor postCursor) (string, error) {
-	payload, err := json.Marshal(cursor)
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(payload), nil
-}
-
-func decodeCursor(encoded string) (postCursor, error) {
-	var cursor postCursor
-	payload, err := base64.RawURLEncoding.DecodeString(encoded)
-	if err != nil {
-		return cursor, err
-	}
-	if err := json.Unmarshal(payload, &cursor); err != nil {
-		return cursor, err
-	}
-	if cursor.ID == "" || cursor.CreatedAt.IsZero() {
-		return cursor, errors.New("cursor is missing fields")
-	}
-	return cursor, nil
 }

@@ -98,7 +98,7 @@ func TestCreatePostController(test *testing.T) {
 			if recorder.Code != http.StatusCreated {
 				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusCreated)
 			}
-			want := `{"data":{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"},"message":"Post created successfully"}`
+			want := `{"data":{"id":"post-id","title":"title","content":"content","totalComments":0,"createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"},"message":"Post created successfully"}`
 			if recorder.Body.String() != want {
 				test.Errorf("Body = %s, want %s", recorder.Body.String(), want)
 			}

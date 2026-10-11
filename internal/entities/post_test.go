@@ -191,7 +191,7 @@ func TestPost(test *testing.T) {
 			test.Fatalf("Failed to marshal post: %v", err)
 		}
 
-		want := `{"id":"custom-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-02T10:00:00Z"}`
+		want := `{"id":"custom-id","title":"title","content":"content","totalComments":0,"createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-02T10:00:00Z"}`
 		if string(output) != want {
 			test.Errorf("JSON = %s, want %s", output, want)
 		}

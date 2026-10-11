@@ -38,6 +38,10 @@ func (postRepositoryMock *postRepositoryMock) Delete(ctx context.Context, input 
 	panic("postRepositoryMock.Delete should not be called")
 }
 
+func (postRepositoryMock *postRepositoryMock) IncrementTotalComments(ctx context.Context, input repositories.IncrementPostTotalCommentsInput) error {
+	panic("postRepositoryMock.IncrementTotalComments should not be called")
+}
+
 // postRepositoryReturningInput builds a repository mock whose Create returns the received post
 // and stores it in received, so the test can inspect what the use case sent.
 func postRepositoryReturningInput(received **entities.Post) *postRepositoryMock {

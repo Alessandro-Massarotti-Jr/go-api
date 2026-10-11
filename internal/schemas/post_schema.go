@@ -9,12 +9,13 @@ import (
 )
 
 type PostSchema struct {
-	MongoID   bson.ObjectID `bson:"_id,omitempty"`
-	ID        string        `bson:"id"`
-	Title     string        `bson:"title"`
-	Content   string        `bson:"content"`
-	CreatedAt time.Time     `bson:"createdAt"`
-	UpdatedAt time.Time     `bson:"updatedAt"`
+	MongoID       bson.ObjectID `bson:"_id,omitempty"`
+	ID            string        `bson:"id"`
+	Title         string        `bson:"title"`
+	Content       string        `bson:"content"`
+	TotalComments int           `bson:"totalComments"`
+	CreatedAt     time.Time     `bson:"createdAt"`
+	UpdatedAt     time.Time     `bson:"updatedAt"`
 }
 
 var PostIndexes = []mongo.IndexModel{

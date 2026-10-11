@@ -124,7 +124,7 @@ func TestListPostsController(test *testing.T) {
 			if recorder.Code != http.StatusOK {
 				test.Errorf("Status = %d, want %d", recorder.Code, http.StatusOK)
 			}
-			want := `{"data":{"items":[{"id":"post-id","title":"title","content":"content","createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"}],"nextCursor":"next-cursor"},"message":"Posts listed successfully"}`
+			want := `{"data":{"items":[{"id":"post-id","title":"title","content":"content","totalComments":0,"createdAt":"2025-01-01T10:00:00Z","updatedAt":"2025-01-01T10:00:00Z"}],"nextCursor":"next-cursor"},"message":"Posts listed successfully"}`
 			if recorder.Body.String() != want {
 				test.Errorf("Body = %s, want %s", recorder.Body.String(), want)
 			}
